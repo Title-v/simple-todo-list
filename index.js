@@ -58,7 +58,7 @@ app.post('/api/todos', (req, res) => {
   
   const todos = readTodos();
   const newTodo = {
-    id: Date.now(),
+    id: Date.now() + Math.floor(Math.random() * 1000),
     text: text.trim(),
     completed: false,
     createdAt: new Date().toISOString()
@@ -83,7 +83,14 @@ app.put('/api/todos/:id', (req, res) => {
     return res.status(404).json({ error: 'Todo not found' });
   }
   
-  todos[todoIndex].completed = true;
+  // Toggle completion state
+  todos[todoIndex].completed = !todos[todoIndex].completed;
+
+  if (writeTodos(todos)) {
+    return res.json(todos[todoIndex]);
+  } else {
+    return res.status(500).json({ error: 'Failed to update todo' });
+  }
 });
 
 // Delete a todo
