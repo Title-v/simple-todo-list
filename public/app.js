@@ -111,6 +111,7 @@ function renderTodos() {
                     onchange="toggleTodo(${todo.id})"
                 />
                 <span class="todo-text">${escapeHtml(todo.text)}</span>
+                <button class="edit-btn" onclick="editTodo(${todo.id})">Edit</button>
                 <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
             </div>
         `).join('');
@@ -132,6 +133,41 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Edit a todo's text
+async function editTodo(id) {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return alert('Todo not found');
+
+    const newText = prompt('Edit todo:', todo.text);
+    if (newText === null) return; // user cancelled
+
+    const trimmed = newText.trim();
+    if (trimmed === '') return alert('Todo text cannot be empty');
+
+    try {
+        const response = await fetch(`${API_BASE}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: trimmed }),
+        });
+
+        if (response.ok) {
+            const updated = await response.json();
+            const idx = todos.findIndex(t => t.id === id);
+            if (idx !== -1) {
+                todos[idx] = updated;
+                renderTodos();
+            }
+        } else {
+            const err = await response.json().catch(() => ({}));
+            alert(err.error || 'Failed to edit todo');
+        }
+    } catch (error) {
+        console.error('Error editing todo:', error);
+        alert('Failed to edit todo');
+    }
 }
 
 // Event listeners
